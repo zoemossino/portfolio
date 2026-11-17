@@ -10,3 +10,6 @@ myreport-1.mp4	poster-3e101cbd.jpg
 myreport-2.mp4	poster-12bd6691.jpg
 myreport-3.mp4	poster-e25d6b22.jpg
 myreport-4.mp4	poster-3a4e0c65.jpg
+galamoon-cover.mp4	poster-galamoon-cover.jpg
+galamoon-mouton.mp4	poster-galamoon-mouton.jpg
+olivas-gif.mp4	poster-olivas-gif.jpg

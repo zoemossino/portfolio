@@ -34,12 +34,28 @@
 
   /* ---- vidéos : lecture automatique quand le fichier existe dans assets/video/ */
   const vids = $$('video[data-src]');
+  // Lecture refusée par le navigateur (iPhone en mode économie d'énergie) : Safari sait afficher un .mp4
+  // comme une image animée, qui, elle, continue de tourner en boucle. Ailleurs, on garde l'image d'aperçu.
+  const asImage = (v) => {
+    if (v.dataset.swap) return;
+    v.dataset.swap = '1';
+    const img = new Image();
+    img.alt = '';
+    img.decoding = 'async';
+    img.onload = () => { vo.unobserve(v); v.pause(); v.replaceWith(img); };
+    img.src = v.dataset.src;
+  };
+  const tryPlay = (v) => v.play().catch((err) => { if (err && err.name === 'NotAllowedError') asImage(v); });
+  let vo;
   if (vids.length && 'IntersectionObserver' in window) {
-    const vo = new IntersectionObserver((entries) => {
+    vo = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         const v = e.target;
         if (e.isIntersecting) {
           if (!v.src && !v.dataset.failed) {
+            // iPhone : la lecture automatique n'est permise que si la vidéo est muette et lue dans la page
+            v.muted = true; v.defaultMuted = true; v.playsInline = true;
+            v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
             v.addEventListener('error', () => {
               if (!v.dataset.retried) { // une seconde tentative avant d'abandonner
                 v.dataset.retried = '1';
@@ -50,13 +66,22 @@
             });
             v.src = v.dataset.src;
           }
-          if (!v.dataset.failed && !reduce) v.play().catch(() => {});
+          if (!v.dataset.failed && !reduce) tryPlay(v);
         } else if (v.src) {
           v.pause();
         }
       });
     }, { rootMargin: '200px 0px' });
     vids.forEach((v) => vo.observe(v));
+    // Si le téléphone a bloqué la lecture automatique (mode économie d'énergie…), on relance au premier toucher
+    const kick = () => vids.forEach((v) => {
+      if (v.isConnected && v.src && v.paused && !v.dataset.failed && !reduce) {
+        const r = v.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < innerHeight) tryPlay(v);
+      }
+    });
+    addEventListener('touchstart', kick, { passive: true });
+    addEventListener('scroll', kick, { passive: true });
   }
 
   /* ---- YouTube : lecture automatique, muette et en boucle dès que la vidéo est visible (jamais de nouvel onglet) */
