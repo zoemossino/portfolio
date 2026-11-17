@@ -20,7 +20,7 @@ LAYOUT = {
     [[:video, 'galamoon-cover', 0.8], [:crop, 'new-galamoon-retro', 0.8]],
     [[:video, 'galamoon-2'], [:video, 'galamoon-mouton', 1.0]],
     [[:fit, 'daaae6b1', TILE, 1.5, '3%']],
-    [[:fit, 'new-galamoon-insta', TILE, 1.45, '2%']]
+    [[:fit, 'new-galamoon-insta-big', TILE, 1.63, '2%']]
   ],
   'spottid' => [
     ['new-spottid-logo'],
