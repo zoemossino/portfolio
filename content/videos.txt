@@ -1,0 +1,12 @@
+Fichier vidéo attendu (assets/video/)	Aperçu actuel (assets/img/)
+galamoon-1.mp4	poster-6a96a091.jpg
+galamoon-2.mp4	poster-0e480c91.jpg
+spottid-1.mp4	poster-b1bbeb0d.jpg
+spottid-2.mp4	poster-d1e6ef03.jpg
+olivas-1.mp4	poster-512ebbf2.jpg
+la-patate-groove-1.mp4	poster-dedabd99.jpg
+la-patate-groove-2.mp4	poster-dbc4c298.jpg
+myreport-1.mp4	poster-3e101cbd.jpg
+myreport-2.mp4	poster-12bd6691.jpg
+myreport-3.mp4	poster-e25d6b22.jpg
+myreport-4.mp4	poster-3a4e0c65.jpg
