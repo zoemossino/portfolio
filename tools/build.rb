@@ -72,7 +72,7 @@ CAT_COLOR = {
 
 # Texte de présentation de la page d'accueil (HTML autorisé)
 INTRO = [
-  'Bonjour ! My name is <strong>Zoé Mossino</strong>, but everybody call me Zazou.',
+  'Bonjour ! My name is Zoé Mossino, but everybody call me <strong>Zazou</strong>.',
   'I am a <strong>graphic designer</strong> and <strong>artistic director</strong>. Inspired by <a href="https://letterboxd.com/zo_moss/" target="_blank" rel="noopener">movies</a>, furniture, <a href="https://open.spotify.com/playlist/0AR71CUG0xulv4rX8KRE00" target="_blank" rel="noopener">disco</a> and my friends.',
   'Currently graphic designer at <a class="it-link" href="layout.html#cbre"><em>CBRE</em></a>, I make designs and layout remarkable and enjoyable.'
 ]
