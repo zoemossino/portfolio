@@ -160,7 +160,7 @@ def cell(c, proj, mode = :row)
     [ar, %(<div class="tile vid" #{st.call(ar)}><video muted loop playsinline preload="none"#{poster} data-src="#{rel}" aria-label="#{h(proj[:name])} — video"></video></div>)]
   when :yt
     ar = 1.7778
-    [ar, %(<button class="tile yt" #{st.call(ar)} type="button" data-yt="#{c[1]}" aria-label="Play video — #{h(proj[:name])}"><img src="assets/img/yt-#{c[1]}.jpg" alt="" loading="lazy" decoding="async"><span class="play" aria-hidden="true"></span></button>)]
+    [ar, %(<div class="tile yt" #{st.call(ar)} data-yt="#{c[1]}" role="img" aria-label="#{h(proj[:name])} — video"><img src="assets/img/yt-#{c[1]}.jpg" alt="" loading="lazy" decoding="async"></div>)]
   when :color
     [c[2], %(<span class="tile" #{st.call(c[2], ";--bg:#{c[1]}")} aria-hidden="true"></span>)]
   when :stack

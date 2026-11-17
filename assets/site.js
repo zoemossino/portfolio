@@ -59,24 +59,28 @@
     vids.forEach((v) => vo.observe(v));
   }
 
-  /* ---- YouTube : chargé seulement au clic */
-  $$('[data-yt]').forEach((b) => b.addEventListener('click', () => {
-    // Fichier ouvert directement depuis le disque (file://) : YouTube refuse l'intégration, on ouvre la vidéo dans un onglet
-    if (location.protocol === 'file:') {
-      window.open(`https://www.youtube.com/watch?v=${b.dataset.yt}`, '_blank', 'noopener');
-      return;
-    }
-    if (b.querySelector('iframe')) return;
+  /* ---- YouTube : lecture automatique, muette et en boucle dès que la vidéo est visible (jamais de nouvel onglet) */
+  const yts = $$('[data-yt]');
+  const ytLoad = (b) => {
+    // Hors serveur (fichier ouvert en double-clic), YouTube refuse l'intégration : on garde simplement l'image
+    if (b.querySelector('iframe') || location.protocol === 'file:') return;
+    const id = b.dataset.yt;
     const f = document.createElement('iframe');
     f.referrerPolicy = 'strict-origin-when-cross-origin';
-    f.src = `https://www.youtube-nocookie.com/embed/${b.dataset.yt}?autoplay=1&rel=0`;
-    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-    f.allowFullscreen = true;
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1`;
+    f.allow = 'autoplay; encrypted-media; picture-in-picture';
     f.title = b.getAttribute('aria-label') || 'Video';
-    b.style.position = getComputedStyle(b).position === 'static' ? 'relative' : '';
+    f.tabIndex = -1;
     b.append(f);
-    b.querySelector('.play')?.remove();
-  }));
+  };
+  if (yts.length && !reduce) {
+    if ('IntersectionObserver' in window) {
+      const yo = new IntersectionObserver((entries) => entries.forEach((e) => {
+        if (e.isIntersecting) { ytLoad(e.target); yo.unobserve(e.target); }
+      }), { rootMargin: '200px 0px' });
+      yts.forEach((b) => yo.observe(b));
+    } else yts.forEach(ytLoad);
+  }
 
   /* ---- visionneuse d'images */
   const dlg = document.querySelector('.zoom');

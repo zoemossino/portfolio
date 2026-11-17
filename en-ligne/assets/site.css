@@ -98,10 +98,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .stack>.tile{flex:var(--g) 1 0;min-height:0;aspect-ratio:auto}
 .note{flex:1;aspect-ratio:auto;padding:13px 16px;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--mute-inv)}
 .gap{flex:1;height:clamp(28px,4vw,64px)}
-.yt{cursor:pointer;width:auto}
-.yt>img{transition:scale .8s var(--ease)}
-.yt:hover>img{scale:1.03}
-.yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.yt{position:relative;width:auto}
+.yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
 .play{position:absolute;left:50%;top:50%;width:clamp(44px,5vw,72px);aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:var(--cream);transition:scale .35s var(--ease)}
 .play::after{content:"";position:absolute;left:54%;top:50%;translate:-50% -50%;border-style:solid;border-width:.62em 0 .62em 1em;border-color:transparent transparent transparent var(--ink);font-size:clamp(11px,1.2vw,17px)}
 .yt:hover .play{scale:1.08}

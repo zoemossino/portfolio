@@ -2,3 +2,6 @@
 *.mov
 *.zip
 .DS_Store
+# les vidéos du site doivent être en ligne
+!assets/video/*.mp4
+!en-ligne/assets/video/*.mp4
