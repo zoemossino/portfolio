@@ -59,3 +59,19 @@ Toutes les modifications se font dans `tools/`, puis on régénère avec `ruby t
 - **CV** : remplacer `assets/2026-EN.pdf` en gardant le même nom.
 
 Ruby est déjà installé sur macOS : rien à installer.
+
+## Vidéos et mode économie d'énergie (iPhone)
+
+En mode économie d'énergie, l'iPhone bloque les vidéos : le site affiche alors à la place un GIF du même nom (`assets/video/<nom>.gif`).
+Après avoir remplacé une vidéo, refaire son GIF :
+
+```bash
+swift tools/mp4togif.swift assets/video/<nom>.mp4 assets/video/<nom>.gif 600 15
+```
+
+(600 = largeur en pixels, 15 = images par seconde ; baisser à 480 et 12 pour une vidéo longue ou très chargée.)
+Les vidéos YouTube ne peuvent pas être lues dans ce mode : elles affichent leur image fixe.
+
+## Version téléphone
+
+Dans `tools/grid.rb`, la liste `MOBILE` indique les visuels qui passent en pleine largeur (`full`) ou en premier dans leur rangée (`first`) sur téléphone.

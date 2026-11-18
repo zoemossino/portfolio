@@ -34,18 +34,23 @@
 
   /* ---- vidéos : lecture automatique quand le fichier existe dans assets/video/ */
   const vids = $$('video[data-src]');
-  // Lecture refusée par le navigateur (iPhone en mode économie d'énergie) : Safari sait afficher un .mp4
-  // comme une image animée, qui, elle, continue de tourner en boucle. Ailleurs, on garde l'image d'aperçu.
+  // Lecture refusée par le téléphone (iPhone en mode économie d'énergie) : on remplace la vidéo par son GIF
+  // (assets/video/<nom>.gif), une image animée qui, elle, tourne toujours. En attendant, l'image d'aperçu reste.
   const asImage = (v) => {
-    if (v.dataset.swap) return;
+    if (v.dataset.swap || !v.dataset.gif || !v.isConnected) return;
     v.dataset.swap = '1';
     const img = new Image();
     img.alt = '';
     img.decoding = 'async';
-    img.onload = () => { vo.unobserve(v); v.pause(); v.replaceWith(img); };
-    img.src = v.dataset.src;
+    img.onload = () => { vo && vo.unobserve(v); v.pause(); v.replaceWith(img); };
+    img.src = v.dataset.gif;
   };
-  const tryPlay = (v) => v.play().catch((err) => { if (err && err.name === 'NotAllowedError') asImage(v); });
+  const onScreen = (el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; };
+  const tryPlay = (v) => {
+    v.play().catch((err) => { if (err && err.name === 'NotAllowedError') asImage(v); });
+    // filet de sécurité : si la vidéo visible ne tourne toujours pas au bout de 3 s, on passe aussi au GIF
+    setTimeout(() => { if (v.isConnected && v.paused && onScreen(v)) asImage(v); }, 3000);
+  };
   let vo;
   if (vids.length && 'IntersectionObserver' in window) {
     vo = new IntersectionObserver((entries) => {
@@ -61,7 +66,7 @@
                 v.dataset.retried = '1';
                 setTimeout(() => { v.src = v.dataset.src; v.play().catch(() => {}); }, 1500);
               } else {
-                v.dataset.failed = '1'; v.removeAttribute('src'); v.load();
+                v.dataset.failed = '1'; v.removeAttribute('src'); v.load(); asImage(v);
               }
             });
             v.src = v.dataset.src;
@@ -75,13 +80,9 @@
     vids.forEach((v) => vo.observe(v));
     // Si le téléphone a bloqué la lecture automatique (mode économie d'énergie…), on relance au premier toucher
     const kick = () => vids.forEach((v) => {
-      if (v.isConnected && v.src && v.paused && !v.dataset.failed && !reduce) {
-        const r = v.getBoundingClientRect();
-        if (r.bottom > 0 && r.top < innerHeight) tryPlay(v);
-      }
+      if (v.isConnected && v.src && v.paused && !v.dataset.failed && !v.dataset.swap && !reduce && onScreen(v)) tryPlay(v);
     });
     addEventListener('touchstart', kick, { passive: true });
-    addEventListener('scroll', kick, { passive: true });
   }
 
   /* ---- YouTube : lecture automatique, muette et en boucle dès que la vidéo est visible (jamais de nouvel onglet) */
@@ -92,12 +93,29 @@
     const id = b.dataset.yt;
     const f = document.createElement('iframe');
     f.referrerPolicy = 'strict-origin-when-cross-origin';
-    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1`;
+    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
     f.allow = 'autoplay; encrypted-media; picture-in-picture';
     f.title = b.getAttribute('aria-label') || 'Video';
     f.tabIndex = -1;
+    // on demande au lecteur YouTube de nous prévenir quand la vidéo démarre vraiment
+    const hello = () => f.contentWindow && f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id, channel: 'widget' }), '*');
+    f.addEventListener('load', () => { hello(); setTimeout(hello, 1200); });
     b.append(f);
   };
+  // La miniature reste affichée tant que la vidéo ne tourne pas (iPhone en mode économie d'énergie : elle ne démarre jamais)
+  addEventListener('message', (e) => {
+    if (!/youtube/.test(e.origin)) return;
+    let d; try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (_) { return; }
+    if (!d || !d.info || d.info.playerState !== 1) return;
+    const b = yts.find((x) => { const f = x.querySelector('iframe'); return f && f.contentWindow === e.source; });
+    if (b) b.classList.add('on');
+  });
+  // Toucher la miniature d'une vidéo bloquée : on montre le lecteur YouTube pour la lancer à la main
+  yts.forEach((b) => b.addEventListener('click', () => {
+    if (b.classList.contains('on') || location.protocol === 'file:') return;
+    ytLoad(b);
+    b.classList.add('on', 'tap');
+  }));
   if (yts.length && !reduce) {
     if ('IntersectionObserver' in window) {
       const yo = new IntersectionObserver((entries) => entries.forEach((e) => {

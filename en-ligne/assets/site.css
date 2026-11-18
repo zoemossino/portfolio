@@ -99,7 +99,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .note{flex:1;aspect-ratio:auto;padding:13px 16px;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--mute-inv)}
 .gap{flex:1;height:clamp(28px,4vw,64px)}
 .yt{position:relative;width:auto}
-.yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+.yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;opacity:0;transition:opacity .5s var(--ease)}
+.yt:not(.on){cursor:pointer}
+.yt.on iframe{opacity:1}
+.yt.tap iframe{pointer-events:auto}
 .play{position:absolute;left:50%;top:50%;width:clamp(44px,5vw,72px);aspect-ratio:1;translate:-50% -50%;border-radius:50%;background:var(--cream);transition:scale .35s var(--ease)}
 .play::after{content:"";position:absolute;left:54%;top:50%;translate:-50% -50%;border-style:solid;border-width:.62em 0 .62em 1em;border-color:transparent transparent transparent var(--ink);font-size:clamp(11px,1.2vw,17px)}
 .yt:hover .play{scale:1.08}
@@ -188,6 +191,21 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   .index a{grid-template-columns:2rem minmax(0,1fr);padding:18px 0 20px}
   .index .cat{grid-column:2;text-align:left;margin-top:6px}
   .preview{display:none}
+  /* blocs choisis dans tools/grid.rb (MOBILE) : pleine largeur, ou remontés en premier dans leur rangée */
+  .row{flex-wrap:wrap}
+  .row>.mfull{flex:1 1 100%}
+  .row>.mfirst{order:-1}
+  .row>.mfull[style*="--mar"]{aspect-ratio:var(--mar)}
+  /* piles de visuels : chaque visuel devient un bloc de la rangée (pleine largeur, ou moitié en grille 2 × 2) */
+  .row>.stack.mfull,.row>.stack.mhalf{display:contents}
+  .stack.mfull>.tile{flex:1 1 100%;aspect-ratio:var(--ar)}
+  .stack.mhalf>.tile{flex:1 1 calc(50% - 4px);aspect-ratio:var(--ar)}
+  .row>.mhide{display:none}
+  .row>.mpair{flex:var(--g) 1 calc(var(--g) * 40%)}
+  /* blocs déplacés d'une rangée à l'autre (MOBILE before) */
+  .grid>.row{order:var(--mo,0)}
+  .grid>.msplit{display:contents}
+  .msplit>*{order:var(--mo,0);flex:none;width:100%}
 }
 @media (max-width:760px){
   .zoom-prev,.zoom-next{top:auto;bottom:10px;translate:none}

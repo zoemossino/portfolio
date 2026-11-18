@@ -80,6 +80,24 @@ LAYOUT = {
   ]
 }
 
+# Version téléphone : blocs qui passent en pleine largeur (full) et blocs qui passent en premier dans leur rangée (first).
+# On les désigne par le nom du fichier ou de la vidéo, comme dans LAYOUT ci-dessus.
+# ratio : autre format du bloc sur téléphone (largeur / hauteur) ; before : { 'bloc déplacé' => 'bloc devant lequel il passe' }
+MOBILE = {
+  'galamoon' => { full: %w[galamoon-cover new-galamoon-retro galamoon-2 galamoon-mouton],
+                  before: { 'daaae6b1' => 'galamoon-mouton' } },
+  'spottid' => { full: %w[new-spottid-secu spottid-1 new-spottid-mockup-2 new-spottid-cards] },
+  'olivas' => { full: %w[new-olivas-logo b32ba7ec olivas-gif 06bfc348 new-olivas-variants new-olivas-can 16eb14b9 new-olivas-bag new-olivas-tshirt] },
+  'meme-pas-sourd' => { full: %w[598d6bf6 6532a275-cbf8 6b90702b ae20e158 3db8e745 fa249b9f e519fc67 2143dc7e-9d50],
+                        ratio: { '6532a275-cbf8' => 1.8 } },
+  'la-patate-groove' => { full: %w[025fa049 la-patate-groove-2 ed70c31a la-patate-groove-1], first: %w[8ba8d117] },
+  # half : les deux visuels d'une pile [:stack] se répartissent à moitié de largeur (grille de 2 × 2 avec la pile voisine)
+  # hide : masqué sur téléphone ; pair : côte à côte sur une ligne à eux seuls
+  'myreport' => { full: %w[myreport-1 myreport-2 myreport-3 myreport-4 dbd81bd6 40f36474 2c199f75 8baad698],
+                  half: %w[07f2809f 3477b08d abe59743], hide: %w[a7d5cf3c], pair: %w[49ba9d26 955147f5] },
+  'cbre' => { full: :all }
+}
+
 # CBRE : la grande image d'ouverture, puis chaque dossier séparé : son nom, sa couverture en pleine largeur,
 # une deuxième page en pleine largeur, puis les autres pages en plus petit sur une rangée
 CBRE_NAMES = ['The Quay', 'Handelsbeurs', 'Belnine', 'Birmingham 225']
@@ -157,7 +175,9 @@ def cell(c, proj, mode = :row)
   when :video
     rel = "assets/video/#{c[1]}.mp4"; ar = c[2] || ratio(rel)
     poster = POSTERS[c[1]] ? %( poster="assets/img/#{POSTERS[c[1]]}") : ''
-    [ar, %(<div class="tile vid" #{st.call(ar)}><video muted loop playsinline preload="none"#{poster} data-src="#{rel}" aria-label="#{h(proj[:name])} — video"></video></div>)]
+    # GIF de secours (même nom, .gif) : affiché quand le téléphone bloque la vidéo (mode économie d'énergie)
+    gif = File.exist?(File.join(ROOT, "assets/video/#{c[1]}.gif")) ? %( data-gif="assets/video/#{c[1]}.gif") : ''
+    [ar, %(<div class="tile vid" #{st.call(ar)}><video muted loop playsinline preload="none"#{poster} data-src="#{rel}"#{gif} aria-label="#{h(proj[:name])} — video"></video></div>)]
   when :yt
     ar = 1.7778
     [ar, %(<div class="tile yt" #{st.call(ar)} data-yt="#{c[1]}" role="img" aria-label="#{h(proj[:name])} — video"><img src="assets/img/yt-#{c[1]}.jpg" alt="" loading="lazy" decoding="async"></div>)]
@@ -174,9 +194,42 @@ def cell(c, proj, mode = :row)
   end
 end
 
+def cell_key(c)
+  return c if c.is_a?(String)
+  c[1].is_a?(Array) ? c[1].first : c[1]
+end
+
 def grid(proj)
   rows = LAYOUT[proj[:slug]] or abort "pas de grille pour #{proj[:slug]}"
-  out = rows.map { |r| %(<div class="row">#{r.map { |c| cell(c, proj).last }.join}</div>) }
+  mob = MOBILE[proj[:slug]] || {}
+  before = mob[:before] || {}
+  # ordre sur téléphone : rangée n° i → 10·i ; une rangée contenant une cible est « éclatée » (ses blocs ont chacun leur ordre)
+  pos = {}
+  rows.each_with_index do |r, i|
+    r.each_with_index { |c, j| pos[cell_key(c)] = { row: i, mo: i * 10 + j * 2 + 2 } }
+  end
+  targets = before.values.map { |t| pos[t] && pos[t][:row] }.compact
+  out = rows.each_with_index.map do |r, i|
+    split = targets.include?(i)
+    cells = r.map do |c|
+      html = cell(c, proj).last
+      k = cell_key(c)
+      cls = []
+      cls << 'mfull' if mob[:full] == :all || Array(mob[:full]).include?(k)
+      cls << 'mfirst' if Array(mob[:first]).include?(k)
+      cls << 'mhalf' if Array(mob[:half]).include?(k)
+      cls << 'mhide' if Array(mob[:hide]).include?(k)
+      cls << 'mpair' if Array(mob[:pair]).include?(k)
+      html = html.sub(/class="(tile|stack)/, %(class="\\1 #{cls.join(' ')})) unless cls.empty?
+      html = html.sub('style="', %(style="--mar:#{mob[:ratio][k]};)) if mob[:ratio] && mob[:ratio][k]
+      html = html.sub('style="', %(style="--mo:#{pos[k][:mo]};)) if split
+      html
+    end
+    moved = r.map { |c| cell_key(c) }.find { |k| before[k] && pos[before[k]] }
+    mo = moved ? pos[before[moved]][:mo] - 1 : i * 10
+    attrs = before.empty? ? '' : %( style="--mo:#{mo}")
+    %(<div class="row#{split ? ' msplit' : ''}"#{attrs}>#{cells.join}</div>)
+  end
   File.write(DIMS_FILE, JSON.pretty_generate(DIMS))
   html = %(<div class="grid">\n        #{out.join("\n        ")}\n      </div>)
   # numéro de version par fichier : le navigateur recharge un visuel dès qu'il est remplacé
